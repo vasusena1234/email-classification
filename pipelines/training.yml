@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: email-spam-training-pipeline
+  annotations:
+    scenarios.ai.sap.com/name: "Email Spam Classifier Scenario"
+    scenarios.ai.sap.com/description: "Train a model to classify spam vs ham messages"
+    
+    executables.ai.sap.com/name: "Spam Classifier Model Training"
+    executables.ai.sap.com/description: "Training a Naive Bayes model on email spam dataset"
+
+    artifacts.ai.sap.com/spamdataset.kind: "dataset"
+    artifacts.ai.sap.com/spammodel.kind: "model"
+  labels:
+    scenarios.ai.sap.com/id: "email-spam-classifier-scenario"
+    ai.sap.com/version: "1.0"
+spec:
+  entrypoint: train-pipeline
+  templates:
+    - name: train-pipeline
+      inputs:
+        artifacts:
+          - name: spamdataset
+            path: /app/data/  # gets mounted here in container
+      outputs:
+        artifacts:
+          - name: spammodel
+            globalName: spammodel
+            path: /app/model/  # this folder will be uploaded to object store
+            archive:
+              none: {}
+      container:
+        image: docker.io/vasusenagunda/email-spam-training:1.0  # your training image
+        command: ["/bin/sh", "-c"]
+        args:
+          - "python /app/src/main.py"

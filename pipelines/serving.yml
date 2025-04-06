@@ -1,0 +1,45 @@
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
+metadata:
+  name: email-spam-serving-pipeline # unique executable ID
+  annotations:
+    scenarios.ai.sap.com/name: "Email Spam Detection Scenario"
+    scenarios.ai.sap.com/description: "Model to detect whether an email is spam or not."
+
+    executables.ai.sap.com/name: "emailspamserving"
+    executables.ai.sap.com/description: "Flask-based email spam detection model serving."
+
+    artifacts.ai.sap.com/emailspammodel.kind: "model"
+  labels:
+    scenarios.ai.sap.com/id: "email-spam-scenario"
+    ai.sap.com/version: "1.0"
+spec:
+  inputs:
+    artifacts:
+      - name: emailspammodel
+  template:
+    apiVersion: "serving.kserve.io/v1beta1"
+    metadata:
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: 1
+        autoscaling.knative.dev/targetBurstCapacity: 0
+      labels: |
+        ai.sap.com/resourcePlan: starter
+    spec: |
+      predictor:
+        minReplicas: 1
+        maxReplicas: 5
+        containers:
+        - name: kserve-container
+          image: docker.io/vasusenagunda/email-spam-serving-image:1.0  # Change this to your real image
+          ports:
+            - containerPort: 9001
+              protocol: TCP
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              set -e && echo "Starting" && gunicorn --chdir /app/src main:app -b 0.0.0.0:9001
+          env:
+            - name: STORAGE_URI
+              value: "{{inputs.artifacts.emailspammodel}}"
