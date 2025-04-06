@@ -1,0 +1,7 @@
+TRAINING
+container building - docker build -t vasusenagunda/email-spam-training:1.0 .
+container pushing  - docker push vasusenagunda/email-spam-training:1.0
+
+SERVING 
+container building - docker build -t vasusenagunda/email-spam-serving-image:1.0 .
+container pushing  - docker push vasusenagunda/email-spam-serving-image:1.0
